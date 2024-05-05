@@ -85,6 +85,13 @@ class LEVELDB_EXPORT Env {
   virtual Status NewRandomAccessFile(const std::string& fname,
                                      RandomAccessFile** result) = 0;
 
+  virtual Status NewNonMmapRandomAccessFile(const std::string& filename,
+                                            RandomAccessFile** result) {
+    (void)filename;
+    (void)result;
+    return Status::NotSupported("NewNonMmapRandomAccessFile");
+  }
+
   // Create an object that writes to a new file with the specified
   // name.  Deletes any existing file with the same name and creates a
   // new file.  On success, stores a pointer to the new file in
@@ -196,6 +203,14 @@ class LEVELDB_EXPORT Env {
   // I.e., the caller may not assume that background work items are
   // serialized.
   virtual void Schedule(void (*function)(void* arg), void* arg) = 0;
+  virtual void ScheduleL0(void (*function)(void* arg), void* arg) = 0;
+  virtual void ScheduleL0Main(void (*function)(void* arg1,void* arg2,void* arg3,int k), void* arg1,void *arg2,void *arg3,int k){
+      (void*)arg1;
+      (void*)arg2;
+      (void*)arg3;
+      (void*)k;
+      (void*)function;
+  };
 
   // Start a new thread, invoking "function(arg)" within the new thread.
   // When "function(arg)" returns, the thread will be destroyed.
@@ -384,6 +399,10 @@ class LEVELDB_EXPORT EnvWrapper : public Env {
   void Schedule(void (*f)(void*), void* a) override {
     return target_->Schedule(f, a);
   }
+  void ScheduleL0(void (*f)(void*), void* a) override {
+    return target_->Schedule(f, a);
+  }
+
   void StartThread(void (*f)(void*), void* a) override {
     return target_->StartThread(f, a);
   }

@@ -20,8 +20,9 @@
 #include "db/write_batch_internal.h"
 #include "leveldb/db.h"
 #include "util/coding.h"
-
+#include "db/pmtable.h"
 namespace leveldb {
+
 
 // WriteBatch header has an 8-byte sequence number followed by a 4-byte count.
 static const size_t kHeader = 12;
@@ -113,6 +114,20 @@ void WriteBatch::Append(const WriteBatch& source) {
 }
 
 namespace {
+class PMTableInserter : public WriteBatch::Handler {
+ public:
+  SequenceNumber sequence_;
+  PmTable* mem_;
+
+  void Put(const Slice& key, const Slice& value) override {
+    mem_->Add(sequence_, kTypeValue, key, value);
+    sequence_++;
+  }
+  void Delete(const Slice& key) override {
+    mem_->Add(sequence_, kTypeDeletion, key, Slice());
+    sequence_++;
+  }
+};
 class MemTableInserter : public WriteBatch::Handler {
  public:
   SequenceNumber sequence_;
@@ -129,6 +144,12 @@ class MemTableInserter : public WriteBatch::Handler {
 };
 }  // namespace
 
+Status WriteBatchInternal::InsertInto(const WriteBatch* b, PmTable* pmtable) {
+  PMTableInserter inserter;
+  inserter.sequence_ = WriteBatchInternal::Sequence(b);
+  inserter.mem_ = pmtable;
+  return b->Iterate(&inserter);
+}
 Status WriteBatchInternal::InsertInto(const WriteBatch* b, MemTable* memtable) {
   MemTableInserter inserter;
   inserter.sequence_ = WriteBatchInternal::Sequence(b);

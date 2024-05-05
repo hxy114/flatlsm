@@ -9,6 +9,7 @@
 #include <deque>
 #include <set>
 #include <string>
+#include <list>
 
 #include "db/dbformat.h"
 #include "db/log_writer.h"
@@ -18,6 +19,9 @@
 #include "port/port.h"
 #include "port/thread_annotations.h"
 
+#include "db/vlog_manager.h"
+#include "db/vlog_writer.h"
+
 namespace leveldb {
 
 class MemTable;
@@ -25,6 +29,7 @@ class TableCache;
 class Version;
 class VersionEdit;
 class VersionSet;
+class PmTable;
 
 class DBImpl : public DB {
  public:
@@ -112,6 +117,8 @@ class DBImpl : public DB {
   // be made to the descriptor are added to *edit.
   Status Recover(VersionEdit* edit, bool* save_manifest)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  Status RecoverPmtable(VersionEdit* edit, bool* save_manifest)
+      EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   void MaybeIgnoreError(Status* s) const;
 
@@ -130,6 +137,8 @@ class DBImpl : public DB {
   Status WriteLevel0Table(MemTable* mem, VersionEdit* edit, Version* base)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
+  Status MakeRoomForWritePmtable(bool force /* compact even if there is room? */)
+      EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   Status MakeRoomForWrite(bool force /* compact even if there is room? */)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   WriteBatch* BuildBatchGroup(Writer** last_writer)
@@ -138,19 +147,33 @@ class DBImpl : public DB {
   void RecordBackgroundError(const Status& s);
 
   void MaybeScheduleCompaction() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  void MaybeScheduleCompactionL0() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   static void BGWork(void* db);
+  static void BGWorkL0(void* db);
+  static void BGWorkL00(void* db,void * compactionstat,void *input,int k) ;
   void BackgroundCall();
+  void BackgroundCallL0();
   void BackgroundCompaction() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  void BackgroundCompactionL0() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   void CleanupCompaction(CompactionState* compact)
+      EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  void CleanupCompactionL0(CompactionState* compact)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   Status DoCompactionWork(CompactionState* compact)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-
-  Status OpenCompactionOutputFile(CompactionState* compact);
-  Status FinishCompactionOutputFile(CompactionState* compact, Iterator* input);
-  Status InstallCompactionResults(CompactionState* compact)
+  Status DoCompactionWorkL0(CompactionState* compact,Iterator *input,int k)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
+  Status OpenCompactionOutputFile(CompactionState* compact);
+  Status OpenCompactionOutputFileSub(CompactionState* compact,int k);
+  Status OpenCompactionVlog(CompactionState* compact,int k);
+  Status FinishCompactionOutputFile(CompactionState* compact, Iterator* input);
+  Status FinishCompactionOutputFileL0(CompactionState* compact,Iterator* input,int k);
+  Status FinishCompactionKVFile(CompactionState* compact, Iterator* input,int k);
+  Status InstallCompactionResults(CompactionState* compact)
+      EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  Status InstallCompactionResultsL0(CompactionState* compact);
+  EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   const Comparator* user_comparator() const {
     return internal_comparator_.user_comparator();
   }
@@ -163,7 +186,7 @@ class DBImpl : public DB {
   const bool owns_info_log_;
   const bool owns_cache_;
   const std::string dbname_;
-
+  bool use_pmtable_;
   // table_cache_ provides its own synchronization
   TableCache* const table_cache_;
 
@@ -174,8 +197,11 @@ class DBImpl : public DB {
   port::Mutex mutex_;
   std::atomic<bool> shutting_down_;
   port::CondVar background_work_finished_signal_ GUARDED_BY(mutex_);
+  port::CondVar background_work_finished_signal_L0_ GUARDED_BY(mutex_);
   MemTable* mem_;
   MemTable* imm_ GUARDED_BY(mutex_);  // Memtable being compacted
+  PmTable *pm_mem_;
+  std::list<PmTable*> pm_list_;
   std::atomic<bool> has_imm_;         // So bg thread can detect non-null imm_
   WritableFile* logfile_;
   uint64_t logfile_number_ GUARDED_BY(mutex_);
@@ -194,6 +220,7 @@ class DBImpl : public DB {
 
   // Has a background compaction been scheduled or is running?
   bool background_compaction_scheduled_ GUARDED_BY(mutex_);
+  bool background_compaction_scheduled_L0_ GUARDED_BY(mutex_);
 
   ManualCompaction* manual_compaction_ GUARDED_BY(mutex_);
 
@@ -203,6 +230,7 @@ class DBImpl : public DB {
   Status bg_error_ GUARDED_BY(mutex_);
 
   CompactionStats stats_[config::kNumLevels] GUARDED_BY(mutex_);
+  vlog::VlogManager vlog_manager_;
 };
 
 // Sanitize db options.  The caller should delete result.info_log if
