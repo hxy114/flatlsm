@@ -47,7 +47,7 @@ static double MaxBytesForLevel(const Options* options, int level) {
   // the level-0 compaction threshold based on number of files.
 
   // Result for both level-0 and level-1
-  double result = 40. * 1048576.0*1024.0;
+  double result = 400. * 1048576.0;
   while (level > 1) {
     result *= 10;
     level--;
@@ -1149,13 +1149,11 @@ int VersionSet::NumLevelFiles(int level) const {
 
 const char* VersionSet::LevelSummary(LevelSummaryStorage* scratch) const {
   // Update code if kNumLevels changes
-  static_assert(config::kNumLevels == 7, "");
+  static_assert(config::kNumLevels == 3, "");
   std::snprintf(
-      scratch->buffer, sizeof(scratch->buffer), "files[ %d %d %d %d %d %d %d ]",
+      scratch->buffer, sizeof(scratch->buffer), "files[ %d %d %d ]",
       int(current_->files_[0].size()), int(current_->files_[1].size()),
-      int(current_->files_[2].size()), int(current_->files_[3].size()),
-      int(current_->files_[4].size()), int(current_->files_[5].size()),
-      int(current_->files_[6].size()));
+      int(current_->files_[2].size()));
   return scratch->buffer;
 }
 
