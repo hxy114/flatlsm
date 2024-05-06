@@ -21,7 +21,7 @@ const uint32_t INVALID=0x00;
 
 const bool IS_FLUSH=true;
 
-const uint64_t L0_THREAD_NUMBER=5;
+const uint64_t L0_THREAD_NUMBER=3;
 
 const std::string MIN_KEY="";
 const std::string MAX_KEY="\xFF\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff";
