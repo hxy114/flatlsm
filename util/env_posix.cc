@@ -910,8 +910,8 @@ void PosixEnv::ScheduleL0(
   background_work_mutex_L0_main_.Lock();
 
   // Start the background thread, if we haven't done so already.
-  if (!started_background_thread_L0_) {
-    started_background_thread_L0_ = true;
+  if (!started_background_thread_L0_main_) {
+    started_background_thread_L0_main_ = true;
     for(int i=0;i<L0_THREAD_NUMBER;i++){
       std::thread background_thread(PosixEnv::BackgroundThreadEntryPointL0Main, this);
       background_thread.detach();
