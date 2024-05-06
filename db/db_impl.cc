@@ -2215,12 +2215,12 @@ Status DBImpl::MakeRoomForWritePmtable(bool force) {
                (pm_mem_->ApproximateMemoryUsage() +1*1024*1024UL<= options_.write_buffer_size)) {
       // There is room in current memtable
       break;
-    } else if (pm_list_.size()>=5 ) {
+    } /*else if (pm_list_.size()>=5 ) {
       // We have filled up the current memtable, but the previous
       // one is still being compacted, so we wait.
       Log(options_.info_log, "Current memtable full; waiting...\n");
       background_work_finished_signal_L0_.Wait();
-    } else {
+    }*/ else {
 
 
       pm_list_.push_back(pm_mem_);
