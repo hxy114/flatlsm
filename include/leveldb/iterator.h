@@ -67,7 +67,7 @@ class LEVELDB_EXPORT Iterator {
   // the returned slice is valid only until the next modification of
   // the iterator.
   // REQUIRES: Valid()
-  virtual Slice value() const = 0;
+  virtual Slice value()  = 0;
 
   // If an error has occurred, return it.  Else return an ok status.
   virtual Status status() const = 0;

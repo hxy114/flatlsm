@@ -55,7 +55,7 @@ class EmptyIterator : public Iterator {
     assert(false);
     return Slice();
   }
-  Slice value() const override {
+  Slice value()  override {
     assert(false);
     return Slice();
   }

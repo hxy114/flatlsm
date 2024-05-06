@@ -288,7 +288,7 @@ class KeyConvertingIterator : public Iterator {
     return key.user_key;
   }
 
-  Slice value() const override { return iter_->value(); }
+  Slice value()  override { return iter_->value(); }
   Status status() const override {
     return status_.ok() ? iter_->status() : status_;
   }
@@ -566,7 +566,7 @@ class Harness : public testing::Test {
     }
   }
 
-  std::string ToString(const Iterator* it) {
+  std::string ToString( Iterator* it) {
     if (!it->Valid()) {
       return "END";
     } else {

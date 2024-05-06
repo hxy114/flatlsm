@@ -2192,7 +2192,7 @@ class ModelDB : public DB {
     void Next() override { ++iter_; }
     void Prev() override { --iter_; }
     Slice key() const override { return iter_->first; }
-    Slice value() const override { return iter_->second; }
+    Slice value()  override { return iter_->second; }
     Status status() const override { return Status::OK(); }
 
    private:

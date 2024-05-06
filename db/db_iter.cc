@@ -65,9 +65,15 @@ class DBIter : public Iterator {
     assert(valid_);
     return (direction_ == kForward) ? ExtractUserKey(iter_->key()) : saved_key_;
   }
-  Slice value() const override {
+  Slice value()  override {
     assert(valid_);
-    return (direction_ == kForward) ? iter_->value() : saved_value_;
+    if(iter_->value().size()<200){
+      db_->vlog_manager_.FetchValueFromVlog(iter_->value(),&finish_key_);
+    }else{
+      finish_key_=iter_->value().ToString();
+    }
+    return (direction_ == kForward) ? finish_key_ : saved_value_;
+
   }
   Status status() const override {
     if (status_.ok()) {
@@ -113,6 +119,7 @@ class DBIter : public Iterator {
   Status status_;
   std::string saved_key_;    // == current key when direction_==kReverse
   std::string saved_value_;  // == current raw value when direction_==kReverse
+  std::string finish_key_;
   Direction direction_;
   bool valid_;
   Random rnd_;

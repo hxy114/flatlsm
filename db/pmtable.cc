@@ -84,7 +84,7 @@ class PmTableIterator : public Iterator {
   void Next() override { iter_.Next(); }
   void Prev() override { iter_.Prev(); }
   Slice key() const override { return GetLengthPrefixedSlice(iter_.key()); }
-  Slice value() const override {
+  Slice value()  override {
     Slice key_slice = GetLengthPrefixedSlice(iter_.key());
     return GetLengthPrefixedSlice(key_slice.data() + key_slice.size());
   }

@@ -112,7 +112,7 @@ class MergingIterator : public Iterator {
     return current_->key();
   }
 
-  Slice value() const override {
+  Slice value()  override {
     assert(Valid());
     return current_->value();
   }

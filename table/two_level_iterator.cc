@@ -33,7 +33,7 @@ class TwoLevelIterator : public Iterator {
     assert(Valid());
     return data_iter_.key();
   }
-  Slice value() const override {
+  Slice value()  override {
     assert(Valid());
     return data_iter_.value();
   }

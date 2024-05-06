@@ -75,7 +75,7 @@ class DBImpl : public DB {
   // Samples are taken approximately once every config::kReadBytesPeriod
   // bytes.
   void RecordReadSample(Slice key);
-
+  vlog::VlogManager vlog_manager_;
  private:
   friend class DB;
   struct CompactionState;
@@ -230,7 +230,7 @@ class DBImpl : public DB {
   Status bg_error_ GUARDED_BY(mutex_);
 
   CompactionStats stats_[config::kNumLevels] GUARDED_BY(mutex_);
-  vlog::VlogManager vlog_manager_;
+
 };
 
 // Sanitize db options.  The caller should delete result.info_log if

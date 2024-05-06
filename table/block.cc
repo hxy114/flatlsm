@@ -130,7 +130,7 @@ class Block::Iter : public Iterator {
     assert(Valid());
     return key_;
   }
-  Slice value() const override {
+  Slice value()  override {
     assert(Valid());
     return value_;
   }
